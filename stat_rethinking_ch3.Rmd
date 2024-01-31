@@ -71,11 +71,76 @@ dens(samples,show.HPDI=0.9)
 
 ### 3M6
 ```{r}
+#Create empty data frame for simulation
+sim <- data.frame(count=double(),width=double())
 
+#Try a few different sample sizes by looping
+for (i in seq(1000,3000,by=100)){
+  
+  #Set up grid approximation as normal
+  p_grid <- seq(from=0,to=1,length.out=1000)
+  prior <- rep(1,1000) #uniform prior
+  
+  #Here, we want to model the probability of getting 70% water in our likelihood
+  #Using a randomly generated value here seems fair
+  obs <- rbinom(1,i,prob=0.7)
+  
+  #Now, generate the likelihood for a given sample size
+  likelihood <- dbinom(obs,size=i,prob=p_grid)
+  
+  #Posterior calculated as normal
+  posterior <- likelihood * prior
+  posterior <- posterior/sum(posterior)
+  
+  #Take samples from the posterior for calculation of a percentile interval
+  samples <- sample(p_grid,posterior,size=1e4,replace = T)
+  interval <- PI(samples,prob=0.99)
+  
+  #Calculate 99% percentile interval width
+  width <- interval[2]-interval[1]
+  
+  #Add count and 99% percentile interval width to sim results
+  sim_result <- data.frame(i,width)
+  sim <- rbind(sim,sim_result)
+}
 ```
+
+```{r}
+require(tidyverse)
+ggplot(sim, aes(x = i, y = width)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "Tosses", y = "Interval Width") +
+  theme(panel.spacing.x = unit(2, "lines")) +
+  theme_bw()
+```
+
 
 ### 3H3
 ```{r}
+#Set up grid approximation as normal
+  p_grid <- seq(from=0,to=1,length.out=1000)
+  prior <- rep(1,1000) #uniform prior
+  
+  #Here, we want to model the probability of getting 70% water in our likelihood
+  #Using a randomly generated value here seems fair
+  sim_births <- rbinom(10000,200,prob=0.5)/200
+  #sim_births <- sim_births
+  
+  #Now, generate the likelihood for a given sample size
+  likelihood <- dbinom(111,size=200,prob=p_grid)
+  
+  #Posterior calculated as normal
+  posterior <- likelihood * prior
+  posterior <- posterior/sum(posterior)
+  
+  #Take samples from the posterior for calculation of a percentile interval
+  samples_actual <- sample(p_grid,posterior,size=1e4,replace = T)
+  #samples_sim <- sample(p_grid,sim_births,size=1e4,replace = T)
+```
 
+```{r}
+dens(sim_births,show.HPDI=0.95)
+dens(samples_actual,add=T,show.HPDI=0.95)
 ```
 
