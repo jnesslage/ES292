@@ -4,3 +4,78 @@ author: "Jacob Nesslage"
 date: "2024-01-31"
 output: html_document
 ---
+# Basic Procedures for Manipulating Posterior Distributions
+
+
+## Homework 
+
+The easy problems use the samples from the posterior distribution for the globe tossing examples. THis code will give you a specific set of samples, so that you can check your work.
+
+```{r generate posterior distribution and select samples}
+p_grid <- seq(from=0,to=1,length.out=1000)
+prior <- rep(1,1000)
+likelihood <- dbinom(6,size=9,prob=p_grid)
+posterior <- likelihood * prior
+posterior <- posterior/sum(posterior)
+
+set.seed(100)
+samples <- sample(p_grid,prob=posterior,size=1e4,replace=T)
+```
+
+And, a visualization
+
+```{r,warn=F}
+require(rethinking)
+dens(prior)
+dens(likelihood)
+dens(posterior)
+dens(samples)
+```
+
+
+### 3E1: How much posterior probability lies below 0.2? (use samples)
+```{r}
+sum(samples < 0.2)/1e4
+```
+
+### 3E3: How much posterior probability lies between 0.2 and 0.8?
+```{r}
+sum(samples > 0.2 & samples < 0.8)/1e4
+```
+
+
+### 3E5: 20% of the posterior probability lies above which value of p?
+```{r}
+quantile(samples,0.2)
+```
+
+### 3M2
+```{r}
+p_grid <- seq(from=0,to=1,length.out=1000)
+prior <- rep(1,1000)
+likelihood <- dbinom(8,size=15,prob=p_grid)
+posterior <- likelihood * prior
+posterior <- posterior/sum(posterior)
+
+set.seed(100)
+samples <- sample(p_grid,prob=posterior,size=1e4,replace=T)
+
+HPDI(samples,prob=0.9)
+```
+Sanity check!
+
+```{r}
+dens(samples,show.HPDI=0.9)
+```
+
+
+### 3M6
+```{r}
+
+```
+
+### 3H3
+```{r}
+
+```
+
