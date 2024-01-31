@@ -1,0 +1,6 @@
+---
+title: "Stat_rethinking_Ch3"
+author: "Jacob Nesslage"
+date: "2024-01-31"
+output: html_document
+---
