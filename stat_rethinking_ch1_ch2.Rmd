@@ -1,0 +1,146 @@
+---
+title: "stat_rethinking_ch1_ch2"
+author: "Jacob Nesslage"
+date: "2024-01-24"
+output: html_document
+---
+
+```{r install packages}
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+install.packages(c("coda","mvtnorm","devtools","dagritty")) #do not install packages requiring compilation if asked at this step
+library(devtools)
+devtools::install_github("stan-dev/cmdstanr")
+devtools::install_github("rmcelreath/rethinking")
+```
+
+```{r}
+require(rstan)
+require(rethinking)
+```
+# Examples from reading
+
+## Example 2.1
+```{r}
+#The probability of 0,1,2,3,4 black marbles given 2black 1 white drawn with replacement
+ways <- c(0,3,8,9,0)
+ways/sum(ways)
+```
+
+## Example 2.2
+```{r}
+# The probability of 6 water values in 9 tosses
+dbinom(6,size=9,prob=0.5)
+```
+
+## Example 2.3
+```{r}
+#Grid Approximation Method
+
+#define grid
+p_grid <- seq(from=0,to=1,length.out=20)
+
+#define prior
+prior <- rep(1,20)
+
+#compute likelihood
+likelihood <-dbinom(6,size=9,prob=p_grid)
+
+#compute product of likelihood and prior
+unstd.posterior <- likelihood*prior
+
+#standardize posterior, so that it sums to 1
+posterior <- unstd.posterior/sum(unstd.posterior)
+```
+
+```{r}
+plot(p_grid,posterior,type="b",xlab="Probability of Water",ylab="Posterior Probability")
+mtext("20 points")
+```
+
+```{r}
+#Grid Approximation Method - alternate prior 1
+
+#define grid
+p_grid <- seq(from=0,to=1,length.out=20)
+
+#define prior
+#prior <- rep(1,20)
+prior <- ifelse(p_grid < 0.5,0,1)
+
+#compute likelihood
+likelihood <-dbinom(6,size=9,prob=p_grid)
+
+#compute product of likelihood and prior
+unstd.posterior <- likelihood*prior
+
+#standardize posterior, so that it sums to 1
+posterior <- unstd.posterior/sum(unstd.posterior)
+
+plot(p_grid,posterior,type="b",xlab="Probability of Water",ylab="Posterior Probability")
+mtext("20 points")
+```
+
+```{r}
+#Grid Approximation Method - alternate prior 1
+
+#define grid
+p_grid <- seq(from=0,to=1,length.out=20)
+
+#define prior
+#prior <- rep(1,20)
+#prior <- ifelse(p_grid < 0.5,0,1)
+prior <- exp(-5*abs(p_grid - 0.5))
+
+#compute likelihood
+likelihood <-dbinom(6,size=9,prob=p_grid)
+
+#compute product of likelihood and prior
+unstd.posterior <- likelihood*prior
+
+#standardize posterior, so that it sums to 1
+posterior <- unstd.posterior/sum(unstd.posterior)
+
+plot(p_grid,posterior,type="b",xlab="Probability of Water",ylab="Posterior Probability")
+mtext("20 points")
+```
+
+
+# Homework
+
+## Problem 2E2
+
+What is the statement Pr(Monday|rain), in plain English?
+
+Ans: The probability that it is Monday, given that it is raining
+
+## Problem 2E3
+
+Which expressions are equivalent to the probability that it is Monday, given it is raining?
+
+Pr(Monday|rain) = Pr(rain|Monday)*Pr(Monday)/Pr(rain)
+
+## Problem 2M3
+
+```{r}
+#Show that Pr(Earth|land)=0.23
+pr_land_earth = 0.3 #Earth is roughly 30% land
+pr_earth=0.5 #equally likely to get Mars or Earth
+pr_land=0.65 #13 out of 20 possible choices between Mars and Earth
+
+pr_earth_land <- pr_land_earth*pr_earth/pr_land
+pr_earth_land
+
+#Or, we can do this:
+
+```
+
+## Problem 2H1
+
+```{r}
+pr_A <- 0.5
+pr_B <- 0.5
+pr_twins_A <- 0.2
+pr_twins_B <- 0.1
+pr_twins <- (0.1 + 0.2)/2
+```
+
