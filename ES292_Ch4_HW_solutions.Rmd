@@ -1,0 +1,183 @@
+---
+title: "ES_292_Ch4_HW"
+author: "Jacob Nesslage"
+date: "2024-02-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=F, message=F)
+```
+
+### E1
+
+Question: 
+
+In the model definition below, which line is the likelihood?
+
+\begin{equation} (1)  y_i ∼ Normal(µ, σ) \end{equation}
+\begin{equation} (2)  µ ∼ Normal(0, 10)\end{equation}
+\begin{equation} (3)  σ ∼ Exponential(1)\end{equation}
+
+Answer: 
+
+(1) - This is the likelihood. Everything else is a specification of priors.
+
+### E2
+
+Question: 
+
+In the model definition just above, how many parameters are in the posterior distribution?
+
+Answer: 
+
+Another way to ask this is how many parameters do we want to estimate. We want to estimate the mean and standard deviation, which will give us our Gaussian posterior, so the answer is 2 parameters. 
+
+### E3
+
+Question: 
+
+Using the model definition above, write down the appropriate form of Bayes’ theorem that includes the proper likelihood and priors.
+
+Answer: 
+
+Following the specification in the “Overthinking” box on page 84, we can write the Bayes' Theorem for the model above as:
+
+```{r}
+knitr::include_graphics("C:/Users/jnesslage/Pictures/Screenshots/Screenshot 2024-02-07 143250.png")
+```
+
+### E4
+
+Question: 
+
+In the model definition below, which line is the linear model?
+
+\begin{equation} yi ∼ Normal(µ, σ) \end{equation}
+\begin{equation} µi = α + βxi \end{equation}
+\begin{equation} α ∼ Normal(0, 10) \end{equation}
+\begin{equation} β ∼ Normal(0, 1) \end{equation}
+\begin{equation} σ ∼ Exponential(2) \end{equation}
+
+
+Answer: 
+
+The linear model is deterministic in nature (i.e. the parameters determine the value of the response variable). Therefore, line 2. 
+is the linear model. All other specifications are stochastic links (identified with ~).  
+
+### E5
+
+Question: In the model definition just above, how many parameters are in the posterior distribution?
+
+Answer: Three (α,β,σ). 
+
+### M2 
+
+Question: 
+
+Translate the model just above into a quap() formula.
+
+Answer:
+
+```{r}
+formula <- alist(
+  y ~ dnorm(mu, sigma),
+  mu ~ dnorm(0, 10),
+  sigma ~ dunif(0, 10)
+)
+formula
+```
+
+### M3
+
+Question: 
+
+Translate the quap() model formula below into a mathematical model definition.
+
+```{r}
+flist <- alist(
+  y ~ dnorm(mu, sigma),
+  mu <- a + b * x,
+  a ~ dnorm(0, 50),
+  b ~ dunif(0, 10),
+  sigma ~ dunif(0, 50)
+)
+```
+
+Answer:
+
+
+\begin{equation} yi ∼ Normal(µ, σ) \end{equation}
+\begin{equation} µi = α + βxi \end{equation}
+\begin{equation} α ∼ Normal(0, 50) \end{equation}
+\begin{equation} β ∼ Normal(0, 10) \end{equation}
+\begin{equation} σ ∼ Uniform(0,50) \end{equation}
+
+### H2
+
+Question: 
+
+Select out all the rows in the Howell1 data with ages below 18 years of age. If you do it right, you should end up with a new data frame with 192 rows in it.
+
+Answer:
+
+```{r}
+d2 <- Howell1[Howell1$age < 18, ]
+weight_bar <- mean(d2$weight)
+nrow(d2)
+
+```
+
+#### Part A
+
+Question: Fit a linear regression to these data, using quap(). Present and interpret the estimates. For every 10 units of increase in weight, how much taller does the model predict a child gets?
+
+
+Answer: 
+
+```{r}
+set.seed(100)
+formula <- alist(
+  height ~ dnorm(mu, sigma),
+  mu <- a + b * (weight - weight_bar),
+  a ~ dnorm(110, 30),
+  b ~ dlnorm(0, 1),
+  sigma ~ dunif(0, 60)
+)
+m <- quap(formula, data = d2)
+precis(m)
+```
+
+For every 10 unit increase in weight, we see a 27.2 cm increase in height.
+
+#### Part B
+
+Question: 
+
+Plot the raw data, with height on the vertical axis and weight on the horizontal axis. Superimpose the MAP regression line and 89% HPDI for the mean. Also superimpose the 89% HPDI for predicted heights.
+
+Answer:
+
+```{r}
+# Data for plot
+weight.seq <- seq(from = min(d2$weight), to = max(d2$weight), by = 1) # sequence to do predictions for
+mu <- link(m, data = data.frame(weight = weight.seq)) # do predictions
+mu.mean <- apply(mu, 2, mean) # calculate mean
+mu.HPDI <- apply(mu, 2, HPDI, prob = 0.89) # identify interval
+sim.height <- sim(m, data = list(weight = weight.seq)) # simulate full predictions
+height.HPDI <- apply(sim.height, 2, HPDI, prob = 0.89) # identify interval
+
+# Plotting
+plot(height ~ weight, data = d2, col = col.alpha(rangi2, 0.7)) # base plot
+lines(weight.seq, mu.mean) # add mean line
+shade(mu.HPDI, weight.seq) # add hdpi interval
+shade(height.HPDI, weight.seq) # add full-hdpi interval
+```
+
+#### Part C
+
+Question: 
+
+What aspects of the model fit concern you? Describe the kinds of assumptions you would change, if any, to improve the model. You don’t have to write any new code. Just explain what the model appears to be doing a bad job of, and what you hypothesize would be a better model.
+
+Answer: The model overpredicts height at the tail ends of weight (low and high weights). The model also underpredicts height in the mid-weight values. Perhaps a polynomial equation would fit the data better.
