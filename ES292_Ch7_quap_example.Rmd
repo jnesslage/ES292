@@ -1,0 +1,100 @@
+---
+title: "ES 292 Ch.7 QUAP example"
+author: "Jacob Nesslage"
+date: "2024-02-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+require(rethinking)
+require(dagitty)
+```
+## Soil Total % C DAG
+
+```{r}
+library(dagitty)
+dag5.1 <-dagitty("dag{PC1->C;PC2->C;PC3->C}")
+coordinates(dag5.1) <-list(x=c(PC1=1,PC2=1,PC3=-1,C=0)
+                           ,y=c(PC1=1,PC2=-1,PC3=1,C=0))
+drawdag(dag5.1)
+```
+# Load data
+
+```{r}
+require(tidyverse)
+specdf <- read.csv("C:/Users/jnesslage/Desktop/ES292/spec_C_df.csv") %>%
+  select(PC1,PC2,PC3,spec.C)
+
+names(specdf) <- c("PC1","PC2","PC3","C")
+```
+
+# Data exploration
+
+```{r}
+summary(specdf)
+hist(specdf$PC1,breaks=20)
+hist(specdf$PC2,breaks=20)
+hist(specdf$PC3,breaks=20)
+hist(specdf$C,breaks=20)
+
+plot(specdf$C ~ specdf$PC1)
+plot(specdf$C ~ specdf$PC2)
+plot(specdf$C ~ specdf$PC3)
+```
+
+
+
+## Model
+```{r}
+formula <- alist( C ~ dnorm(mu, sigma),
+        mu <- a + b1 * PC1 + b2 *PC2 + b3 * PC3,
+        a ~ dnorm(1.5, 0.5),
+        b1 ~ dnorm(0, 1),
+        b2 ~ dnorm(0, 1),
+        b3 ~ dnorm(0, 1),
+        sigma ~ dexp(1)
+        )
+m <- quap(formula,data = specdf)
+
+plot(precis(m))
+m
+
+```
+
+
+```{r}
+set.seed(100)
+formula <- alist( C ~ dnorm(mu, sigma),
+        mu <- a + b1 * PC1 + b2 *PC2 + b3 * PC3,
+        a ~ dnorm(1.5, 0.5),
+        b1 ~ dnorm(0, 1),
+        b2 ~ dnorm(0, 1),
+        b3 ~ dnorm(0, 1),
+        sigma ~ dexp(1)
+        )
+m <- quap(formula,data = specdf)
+
+plot(precis(m))
+m
+
+set.seed(100)
+formula2 <- alist( C ~ dnorm(mu, sigma),
+        mu <- a + b1 * PC1 + b2 *PC2,
+        a ~ dnorm(1.5, 0.5),
+        b1 ~ dnorm(0, 1),
+        b2 ~ dnorm(0, 1),
+        sigma ~ dexp(1)
+        )
+n <- quap(formula2,data = specdf)
+
+plot(precis(n))
+n
+
+compare(m,n,func=PSIS)
+```
+
+
